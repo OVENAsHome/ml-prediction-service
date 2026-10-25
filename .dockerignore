@@ -2,3 +2,4 @@ venv/
 .git/
 **/.env
 **/__pycache__/
+model/*.pkl

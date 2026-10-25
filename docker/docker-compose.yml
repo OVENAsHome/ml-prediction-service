@@ -1,10 +1,7 @@
 version: "3.8"
 services:
   app:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile
-    image: ml-app:v1
+    image: ghcr.io/ovenashome/ml-prediction-service/ml-app:latest
     container_name: ml-app
     ports:
       - "5000:5000"
