@@ -1,0 +1,67 @@
+---
+- name: Configure DB server (VM1)
+  hosts: db
+  become: yes
+  vars_files:
+    - vault.yml
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install PostgreSQL
+      apt:
+        name:
+          - postgresql
+          - postgresql-contrib
+          - acl
+        state: present
+
+    - name: Ensure PostgreSQL is running and enabled
+      service:
+        name: postgresql
+        state: started
+        enabled: yes
+
+    - name: Create ml_predictions database
+      become_user: postgres
+      shell: |
+        psql -tc "SELECT 1 FROM pg_database WHERE datname = 'ml_predictions'" | grep -q 1 || psql -c "CREATE DATABASE ml_predictions;"
+      args:
+        executable: /bin/bash
+        chdir: /tmp
+      register: db_result
+      changed_when: "'CREATE DATABASE' in db_result.stdout"
+
+    - name: Create ml_app user
+      become_user: postgres
+      shell: |
+        psql -tc "SELECT 1 FROM pg_roles WHERE rolname = 'ml_app'" | grep -q 1 || psql -c "CREATE USER ml_app WITH ENCRYPTED PASSWORD '{{ db_password }}';"
+      args:
+        executable: /bin/bash
+        chdir: /tmp
+      register: user_result
+      changed_when: "'CREATE ROLE' in user_result.stdout"
+      no_log: true
+
+    - name: Grant privileges on database
+      become_user: postgres
+      command: psql -c "GRANT ALL PRIVILEGES ON DATABASE ml_predictions TO ml_app;"
+      args:
+        chdir: /tmp
+      changed_when: false
+
+    - name: Copy DB init SQL
+      copy:
+        src: ../db/init.sql
+        dest: /tmp/init.sql
+        mode: '0644'
+
+    - name: Run DB init SQL
+      become_user: postgres
+      command: psql -d ml_predictions -f /tmp/init.sql
+      args:
+        chdir: /tmp
+      register: sql_result
+      changed_when: "'CREATE TABLE' in sql_result.stdout"

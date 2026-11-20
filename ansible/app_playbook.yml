@@ -1,0 +1,56 @@
+---
+- name: Configure app server (VM2)
+  hosts: app
+  become: yes
+  vars_files:
+    - vault.yml
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Install Docker, Docker Compose and ACL
+      apt:
+        name:
+          - docker.io
+          - docker-compose
+          - acl
+        state: present
+
+    - name: Ensure Docker is running and enabled
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add student to docker group
+      user:
+        name: student
+        groups: docker
+        append: yes
+
+    - name: Clone/update project repository
+      git:
+        repo: "git@github.com:OVENAsHome/ml-prediction-service.git"
+        dest: /home/student/ml-prediction-service
+        version: main
+        update: yes
+      become_user: student
+
+    - name: Copy .env file with DB password
+      copy:
+        content: "DB_PASSWORD={{ db_password }}\n"
+        dest: /home/student/ml-prediction-service/docker/.env
+        owner: student
+        group: student
+        mode: '0600'
+      no_log: true
+
+    - name: Start ML service via docker-compose
+      command: docker-compose -f docker/docker-compose.yml up -d
+      args:
+        chdir: /home/student/ml-prediction-service
+      become_user: student
+      register: compose_result
+      changed_when: "'Creating' in compose_result.stderr or 'Recreating' in compose_result.stderr"

@@ -1,0 +1,4 @@
+pm_api_url          = "https://10.10.10.10:8006/"
+pm_api_token_id     = "root@pam!terraform"
+pm_api_token_secret = "your-secret-here"
+ssh_public_key      = "ssh-ed25519 AAAA... student@app-server"

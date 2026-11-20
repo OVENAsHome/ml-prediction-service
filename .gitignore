@@ -9,3 +9,8 @@ model/*.pkl
 !model/.gitkeep
 .pytest_cache/
 actions-runner/
+*.tfstate
+*.tfstate.*
+.terraform/
+terraform.tfvars
+crash.log
