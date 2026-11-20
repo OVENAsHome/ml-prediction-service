@@ -23,3 +23,10 @@ def test_predict_wrong_features_count():
     client = app.test_client()
     response = client.post("/predict", json={"features": [1.0, 2.0, 3.0]})
     assert response.status_code == 400
+
+
+def test_metrics():
+    client = app.test_client()
+    response = client.get("/metrics")
+    assert response.status_code == 200
+    assert b"ml_predictions_total" in response.data

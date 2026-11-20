@@ -14,3 +14,4 @@ actions-runner/
 .terraform/
 terraform.tfvars
 crash.log
+model/metrics.json

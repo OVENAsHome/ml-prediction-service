@@ -1,3 +1,4 @@
+import json
 import pickle
 
 from sklearn.datasets import load_wine
@@ -19,4 +20,6 @@ print(f"Test accuracy: {accuracy:.3f}")
 
 with open("model/model.pkl", "wb") as f:
     pickle.dump(model, f)
-print("Model trained and saved to model/model.pkl")
+with open("model/metrics.json", "w") as f:
+    json.dump({"accuracy": accuracy}, f)
+print("Model and metrics saved to model/")
