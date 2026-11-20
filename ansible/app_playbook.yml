@@ -54,3 +54,28 @@
       become_user: student
       register: compose_result
       changed_when: "'Creating' in compose_result.stderr or 'Recreating' in compose_result.stderr"
+
+    - name: Copy monitoring configs
+      copy:
+        src: "../monitoring/{{ item }}"
+        dest: "/home/student/ml-prediction-service/monitoring/{{ item }}"
+        owner: student
+        mode: '0644'
+      loop:
+        - prometheus.yml
+        - alerts.yml
+        - alertmanager.yml
+        - grafana-dashboard.json
+      become_user: student
+
+    - name: Stop docker-compose stack
+      command: docker-compose -f docker/docker-compose.yml down
+      args:
+        chdir: /home/student/ml-prediction-service
+      become_user: student
+
+    - name: Restart docker-compose stack
+      command: docker-compose -f docker/docker-compose.yml up -d
+      args:
+        chdir: /home/student/ml-prediction-service
+      become_user: student
