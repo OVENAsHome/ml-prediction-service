@@ -79,3 +79,21 @@
       args:
         chdir: /home/student/ml-prediction-service
       become_user: student
+
+    - name: Pull latest images
+      command: docker-compose -f docker/docker-compose.yml pull
+      args:
+        chdir: /home/student/ml-prediction-service
+      become_user: student
+
+    - name: Stop stack before recreate
+      command: docker-compose -f docker/docker-compose.yml down --remove-orphans
+      args:
+        chdir: /home/student/ml-prediction-service
+      become_user: student
+
+    - name: Start updated stack
+      command: docker-compose -f docker/docker-compose.yml up -d
+      args:
+        chdir: /home/student/ml-prediction-service
+      become_user: student
