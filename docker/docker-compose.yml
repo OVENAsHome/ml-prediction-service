@@ -1,23 +1,45 @@
 version: "3.8"
 services:
-  app:
-    image: ghcr.io/ovenashome/ml-prediction-service/ml-app:latest
+  prediction-service:
+    image: ghcr.io/ovenashome/ml-prediction-service/prediction-service:latest
     build:
       context: ..
       dockerfile: docker/Dockerfile
-    container_name: ml-app
+    container_name: prediction-service
     ports:
       - "5000:5000"
+    environment:
+      MODEL_PATH: /model/model.pkl
+      LOGGER_URL: http://logger-service:5001/log
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    depends_on:
+      - logger-service
+    networks:
+      - monitoring
+
+  logger-service:
+    image: ghcr.io/ovenashome/ml-prediction-service/logger-service:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.logger
+    container_name: logger-service
+    ports:
+      - "5001:5001"
     environment:
       DB_HOST: 10.10.10.101
       DB_NAME: ml_predictions
       DB_USER: ml_app
       DB_PASSWORD: ${DB_PASSWORD}
       DB_SSLMODE: require
-      MODEL_PATH: /model/model.pkl
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5001/health')"]
       interval: 30s
       timeout: 5s
       retries: 3
